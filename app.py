@@ -11,7 +11,7 @@ from Crypto.Cipher import PKCS1_OAEP
 import binascii
 from base64 import b64encode
 import sys
-from elgamal.elgamal import Elgamal
+
 
 st.set_page_config(
     page_title="An toàn bảo mật Thông Tin", 
