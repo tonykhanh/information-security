@@ -157,7 +157,7 @@ def render_home():
     - **Modern**: DES, RSA, Elgamal, Fernet.
     - **Encoding**: Base64.
     """)
-    st.image("https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5", caption="Information Security", use_container_width=True)
+    st.image("https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5", caption="Information Security", use_column_width=True)
 
 def render_reverse_cipher():
     st.header("🔄 Reverse Cipher (Mã Đảo Ngược)")
