@@ -12,6 +12,9 @@ import sys
 # ==============================================================================
 # CONFIG & STYLING
 # ==============================================================================
+# ==============================================================================
+# CONFIG & STYLING
+# ==============================================================================
 st.set_page_config(
     page_title="Information Security - Cipher Collection",
     page_icon="🛡️",
@@ -19,49 +22,62 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-def inject_custom_css():
-    st.markdown("""
+def inject_custom_css(bg_color, text_color, header_color):
+    # Depending on how aggressive we want to be, we can target .stApp or specific containers.
+    # Streamlit's default light mode usually has white bg.
+    st.markdown(f"""
         <style>
-        /* Main Container */
-        .main {
-            background-color: #f8f9fa;
-        }
+        /* Main App Background */
+        .stApp {{
+            background-color: {bg_color};
+            color: {text_color};
+        }}
+        
         /* Headers */
-        h1 {
-            color: #2c3e50;
+        h1, h2, h3, h4, h5, h6, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {{
+            color: {header_color} !important;
             font-family: 'Helvetica Neue', sans-serif;
-            font-weight: 700;
-        }
-        h2, h3 {
-            color: #34495e;
-            font-family: 'Helvetica Neue', sans-serif;
-        }
+        }}
+        
+        /* Global Text Color */
+        .stMarkdown p, .stMarkdown li, .stMarkdown span {{
+            color: {text_color} !important;
+        }}
+        
         /* Custom Success/Info Boxes */
-        .stSuccess {
+        .stSuccess {{
             border-left: 5px solid #2ecc71;
             background-color: #e8f8f5;
-        }
-        .stInfo {
+        }}
+        .stInfo {{
             border-left: 5px solid #3498db;
             background-color: #eafaf1;
-        }
+        }}
+        
+        /* Input Labels */
+        .stTextInput label, .stNumberInput label {{
+             color: {text_color} !important;
+             font-weight: bold;
+        }}
+        
         /* Button Styling */
-        .stButton > button {
-            background-color: #34495e;
+        .stButton > button {{
+            background-color: {header_color};
             color: white;
             border-radius: 8px;
             padding: 0.5rem 1rem;
             border: none;
             width: 100%;
             transition: all 0.3s;
-        }
-        .stButton > button:hover {
-            background-color: #2c3e50;
+        }}
+        .stButton > button:hover {{
+            opacity: 0.9;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+        }}
         </style>
     """, unsafe_allow_html=True)
 
+# ... (Helper classes & functions remain unchanged) ...
 # ==============================================================================
 # HELPER CLASSES & FUNCTIONS
 # ==============================================================================
@@ -502,10 +518,23 @@ def render_elgamal_cipher():
 # ==============================================================================
 
 def main():
-    inject_custom_css()
-    
     st.sidebar.title("MENU")
     
+    # -------------------------------------------------------------------------
+    # Sidebar: Theme Settings
+    # -------------------------------------------------------------------------
+    with st.sidebar.expander("🎨 Theme Settings", expanded=True):
+        st.markdown("Customize your detailed aesthetics.")
+        bg_color = st.color_picker("Background Color", "#f8f9fa")
+        text_color = st.color_picker("Text Color", "#2c3e50")
+        header_color = st.color_picker("Header/Accent Color", "#34495e")
+        
+        # Reset Button (Optional logic, or just let them pick)
+        # st.button("Reset to Default") 
+        
+    # Inject CSS with dynamic variables
+    inject_custom_css(bg_color, text_color, header_color)
+
     # Mapping friendly names to functions
     PAGES = {
         "Home / Intro": render_home,
@@ -537,3 +566,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
