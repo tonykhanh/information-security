@@ -1,10 +1,7 @@
-from email import message
-from os import sep
-from numpy import size
-from django.shortcuts import redirect
 import streamlit as st
 import code as cd
-from code import permute,hex2bin,bin2hex,initial_perm,keyp,shift_left,key_comp,shift_table,xor,exp_d,bin2dec,dec2bin,per,sbox,final_perm
+# Imports from code.py needed for local helpers (DES)
+from code import permute, hex2bin, bin2hex, initial_perm, keyp, shift_left, key_comp, shift_table, xor, exp_d, bin2dec, dec2bin, per, sbox, final_perm
 from cryptography.fernet import Fernet
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
@@ -12,430 +9,531 @@ import binascii
 from base64 import b64encode
 import sys
 
-
+# ==============================================================================
+# CONFIG & STYLING
+# ==============================================================================
 st.set_page_config(
-    page_title="An toàn bảo mật Thông Tin", 
-    page_icon=":shark:",
-    layout="centered", 
-    initial_sidebar_state="auto", 
-    menu_items=None
+    page_title="Information Security - Cipher Collection",
+    page_icon="🛡️",
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-st.header('Hệ mã cổ điển và hệ mã công khai')
-choices = ["Vui lòng chọn hệ mã", "Mã đảo ngược", "Mã Caesar","Mã đổi chỗ","Mã thay thế đơn","Mã Affine","Mã Vigenere","Mã Hill","Base64","Hệ mã XOR","Mã nhân","Fernet chuỗi ký tự","Thám mã Ceasar","Mã DES","Mã RSA","Mã Elgamal"]
-choice = st.selectbox("", choices, 0)
+def inject_custom_css():
+    st.markdown("""
+        <style>
+        /* Main Container */
+        .main {
+            background-color: #f8f9fa;
+        }
+        /* Headers */
+        h1 {
+            color: #2c3e50;
+            font-family: 'Helvetica Neue', sans-serif;
+            font-weight: 700;
+        }
+        h2, h3 {
+            color: #34495e;
+            font-family: 'Helvetica Neue', sans-serif;
+        }
+        /* Custom Success/Info Boxes */
+        .stSuccess {
+            border-left: 5px solid #2ecc71;
+            background-color: #e8f8f5;
+        }
+        .stInfo {
+            border-left: 5px solid #3498db;
+            background-color: #eafaf1;
+        }
+        /* Button Styling */
+        .stButton > button {
+            background-color: #34495e;
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            border: none;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .stButton > button:hover {
+            background-color: #2c3e50;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
+# ==============================================================================
+# HELPER CLASSES & FUNCTIONS
+# ==============================================================================
 
-if choice == "Mã đảo ngược":
-    message = st.text_input("Nhập vào mã muốn được mã hóa:")
-    st.caption('VD: This is program to explain reverse cipher.')
-    if message == "":
-        st.warning('Vui lòng nhập thông tin cần thiết !!!')
-    else:
-        # Mã hóa mã đảo ngược
-        translated = cd.encrypt (message)
-        st.markdown('**Kết quả đã được encrypt:**')
-        st.text(translated)
-        # Giải mã mã đảo ngược
-        decrypted = cd.decrypt (translated)
-        st.markdown('**Trả về kết quả decrypted:**')
-        st.text(decrypted)
-elif choice == "Mã Caesar":
-    message = st.text_input("Nhập vào mã muốn được mã hóa:")  
-    st.caption("VD: CEasER CIPHER DEMO và k = 4 hoặc 13")
-    if message == "":
-        st.warning('Vui lòng nhập thông tin cần thiết !!!')
-    else:
-        buff, col, buff2 = st.columns([1,3,4])
-        k = col.text_input('Nhập k:')
-        if k == "":
-            st.warning('Vui lòng nhập k !!!')
-        else:
-            # Mã hóa mã Caesar
-            translated = cd.encryptCaesar(message,int(k))
-            st.markdown('**Kết quả đã được encrypt:**')
-            st.text(translated)
-            # Giải mã mã Caesar
-            decrypted = cd.decryptCaesar(translated,int(k))
-            st.markdown('**Trả về kết quả decrypted:**')
-            st.text(decrypted)
-elif choice == "Mã đổi chỗ":
-    message = st.text_input("Nhập vào mã muốn được mã hóa:")
-    st.caption("VD: HELLOWORLDLOVES và k = 12345")  
-    if message == "":
-        st.warning('Vui lòng nhập thông tin cần thiết !!!')
-    else:
-        buff, col, buff2 = st.columns([1,3,4])
-        k = col.text_input('Nhập k:')
-        if k == "":
-            st.warning('Vui lòng nhập k !!!')
-        else:
-            # a = message.replace(" ","")
-            # Mã hóa mã đổi chỗ
-            translated = cd.encryptDc(message,k)
-            st.markdown('**Kết quả đã được encrypt:**')
-            st.text(translated)
-            # Giải mã mã đổi chỗ
-            decrypted = cd.decryptDc(translated,k)
-            st.markdown('**Trả về kết quả decrypted:**')
-            st.text(decrypted)
-elif choice == "Mã thay thế đơn":
-    message = st.text_input("Nhập vào mã muốn được mã hóa:")
-    st.caption("VD: defend the east wall of the castle và key = random ")
-    st.caption("26 key APHABET: ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    if message == "":
-        st.warning('Vui lòng nhập thông tin cần thiết !!!')
-    else:
-        buff, col, buff2 = st.columns([1,3,4])
-        key = col.text_input('Nhập key:')  
+def mod_inverse_helper(x, m):
+    """Calculates modular inverse."""
+    for n in range(m):
+        if (x * n) % m == 1:
+            return n
+    return None
 
-        if key == "":
+class AffineHelper:
+    DIE = 26
+    def __init__(self, a, b):
+        self.KEY = (int(a), int(b), mod_inverse_helper(int(a), 26))
+
+    def encryptChar(self, char):
+        K1, K2, kI = self.KEY
+        if kI is None: return char # Handle case where inverse doesn't exist
+        if not char.isalpha(): return char
+        base = 65 if char.isupper() else 97
+        return chr((K1 * (ord(char.upper()) - 65) + K2) % self.DIE + base)
+
+    def encrypt(self, string):
+        return "".join(map(self.encryptChar, string))
+
+    def decryptChar(self, char):
+        K1, K2, KI = self.KEY
+        if KI is None or KI == "Null": return char # Safety check
+        if not char.isalpha(): return char
+        base = 65 if char.isupper() else 97
+        val = KI * ((ord(char.upper()) - 65) - K2) % self.DIE
+        return chr(val + base)
+
+    def decrypt(self, string):
+        return "".join(map(self.decryptChar, string))
+
+def run_des_encryption(pt_hex, key_hex):
+    """Helper to run DES encryption logic."""
+    try:
+        pt = hex2bin(pt_hex)
+        pt = permute(pt, initial_perm, 64)
+        key = hex2bin(key_hex)
+        key = permute(key, keyp, 56)
+        left = key[0:28]
+        right = key[28:56]
+        rkb = []
+        rk = []
+        
+        for i in range(0, 16):
+            left = shift_left(left, shift_table[i])
+            right = shift_left(right, shift_table[i])
+            combine_str = left + right
+            round_key = permute(combine_str, key_comp, 48)
+            rkb.append(round_key)
+            rk.append(bin2hex(round_key))
+            
+        def encryptDES_core(pt, rkb):
+            left = pt[0:32]
+            right = pt[32:64]
+            for i in range(0, 16):
+                right_expanded = permute(right, exp_d, 48)
+                xor_x = xor(right_expanded, rkb[i])
+                sbox_str = ""
+                for j in range(0, 8):
+                    row = bin2dec(int(xor_x[j * 6] + xor_x[j * 6 + 5]))
+                    col = bin2dec(int(xor_x[j * 6 + 1] + xor_x[j * 6 + 2] + xor_x[j * 6 + 3] + xor_x[j * 6 + 4]))
+                    val = sbox[int(j)][int(row)][int(col)]
+                    sbox_str = sbox_str + dec2bin(val)
+                sbox_str = permute(sbox_str, per, 32)
+                result = xor(left, sbox_str)
+                left = result
+                if(i != 15):
+                    left, right = right, left
+            combine = left + right
+            return permute(combine, final_perm, 64)
+
+        cipher_text_bin = encryptDES_core(pt, rkb)
+        return bin2hex(cipher_text_bin), rkb, rk
+    except Exception as e:
+        return None, None, str(e)
+
+def run_des_decryption(cipher_hex, rkb, rk):
+    """Helper for DES decryption."""
+    try:
+        rkb_rev = rkb[::-1]
+        rk_rev = rk[::-1] # Not strictly needed for logic but kept for consistency
+        pt1 = hex2bin(cipher_hex)
+        pt1 = permute(pt1, initial_perm, 64)
+        
+        # Re-use core logic? 
+        # For simplicity, duplicating core loop logic inverse or implementing inverse calling is better. 
+        # But app.py previously re-implemented it inline. Let's adapt logic.
+        
+        def encryptDES_core(pt, rkb_keys):
+            left = pt[0:32]
+            right = pt[32:64]
+            for i in range(0, 16):
+                right_expanded = permute(right, exp_d, 48)
+                xor_x = xor(right_expanded, rkb_keys[i])
+                sbox_str = ""
+                for j in range(0, 8):
+                    row = bin2dec(int(xor_x[j * 6] + xor_x[j * 6 + 5]))
+                    col = bin2dec(int(xor_x[j * 6 + 1] + xor_x[j * 6 + 2] + xor_x[j * 6 + 3] + xor_x[j * 6 + 4]))
+                    val = sbox[int(j)][int(row)][int(col)]
+                    sbox_str = sbox_str + dec2bin(val)
+                sbox_str = permute(sbox_str, per, 32)
+                result = xor(left, sbox_str)
+                left = result
+                if(i != 15):
+                    left, right = right, left
+            combine = left + right
+            return permute(combine, final_perm, 64)
+
+        decrypted_bin = encryptDES_core(pt1, rkb_rev)
+        return bin2hex(decrypted_bin)
+    except Exception as e:
+        return str(e)
+
+# ==============================================================================
+# PAGE RENDERERS
+# ==============================================================================
+
+def render_home():
+    st.markdown("## 👋 Welcome to the Cipher Collection")
+    st.markdown("""
+    This application demonstrates various classical and modern cryptographic algorithms.
+    
+    👈 **Select a cipher from the sidebar** to get started.
+    
+    ### Available Categories:
+    - **Classical**: Reverse, Caesar, Vigenere, Atbash (Substitute), etc.
+    - **Modern**: DES, RSA, Elgamal, Fernet.
+    - **Encoding**: Base64.
+    """)
+    st.image("https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5", caption="Information Security", use_container_width=True)
+
+def render_reverse_cipher():
+    st.header("🔄 Reverse Cipher (Mã Đảo Ngược)")
+    st.info("The Reverse Cipher simply reverses the string. It is not secure but demonstrates simple obfuscation.")
+    
+    message = st.text_input("📝 Input Message")
+    if message:
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🔒 Encrypt"):
+                translated = cd.encrypt(message)
+                st.session_state.reverse_enc = translated
+        with col2:
+            if st.button("🔓 Decrypt"):
+                if 'reverse_enc' in st.session_state:
+                    decrypted = cd.decrypt(st.session_state.reverse_enc)
+                    st.session_state.reverse_dec = decrypted
+                else:
+                    st.warning("Encrypt something first!")
+
+        if 'reverse_enc' in st.session_state:
+            st.success(f"**Encrypted:** {st.session_state.reverse_enc}")
+        if 'reverse_dec' in st.session_state:
+            st.info(f"**Decrypted:** {st.session_state.reverse_dec}")
+
+def render_caesar_cipher():
+    st.header("🏛️ Caesar Cipher")
+    with st.expander("📖 Theoretical Guide"):
+        st.write("""
+        The Caesar cipher is a simple substitution cipher that replaces each letter in a text by a letter a fixed number of positions down the alphabet. 
+        **Key (k)**: The number of positions to shift.
+        """)
+    
+    col1, col2 = st.columns([3, 1])
+    message = col1.text_input("Input Message")
+    k = col2.number_input("Shift Key (k)", min_value=1, max_value=25, value=3)
+    
+    if message:
+        if st.button("Runs"):
+            enc = cd.encryptCaesar(message, int(k))
+            dec = cd.decryptCaesar(enc, int(k))
+            
+            st.subheader("Results")
+            st.success(f"**Encrypted:** {enc}")
+            st.info(f"**Decrypted Back:** {dec}")
+
+def render_transposition_cipher(): # Mã đổi chỗ
+    st.header("🔀 Transposition Cipher (Mã Đổi Chỗ)")
+    st.info("Rearranges the characters of the plaintext according to a regular system.")
+    
+    message = st.text_input("Input Message", "HELLOWORLD")
+    key = st.text_input("Numeric Key", "12345")
+    
+    if message and key:
+        if st.button("Process"):
+            try:
+                enc = cd.encryptDc(message, key)
+                dec = cd.decryptDc(enc, key)
+                st.success(f"**Encrypted:** {enc}")
+                st.info(f"**Decrypted:** {dec}")
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+def render_substitution_cipher(): # Mã thay thế đơn
+    st.header("🔠 Simple Substitution Cipher")
+    st.caption("Replaces each letter with another specific letter.")
+    
+    message = st.text_input("Input Message")
+    key = st.text_input("Key (26 unique chars) - Leave empty for random", "")
+    
+    if st.button("Encrypt & Decrypt"):
+        if not message:
+            st.warning("Please enter a message.")
+            return
+            
+        if not key:
             key = cd.getRandomKey()
-            # Mã hóa thay thế đơn
-            translated = cd.encryptChange(message, key)
-            st.markdown('**Kết quả đã được encrypt:**')
-            st.text(translated)
-            # Giải mã thay thế đơn
-            decrypted = cd.decryptChange(translated,key)
-            st.markdown('**Trả về kết quả decrypted:**')
-            st.text(decrypted)     
-        elif len(key) < len(cd.LETTERS):
-            st.warning('Vui lòng nhập đủ 26 khóa ALPHA !!!')
+            st.warning(f"Using Generated Key: {key}")
+        
+        if len(set(key)) != 26 or len(key) != 26:
+             st.error("Key must be exactly 26 unique characters.")
         else:
-            # Mã hóa thay thế đơn
-            translated = cd.encryptChange(message, key)
-            st.markdown('**Kết quả đã được encrypt:**')
-            st.text(translated)
-            # Giải mã thay thế đơn
-            decrypted = cd.decryptChange(translated,key)
-            st.markdown('**Trả về kết quả decrypted:**')
-            st.text(decrypted)
-elif choice == "Mã Affine":
-    message = st.text_input("Nhập vào mã muốn được mã hóa:")
-    st.caption("VD: ONAUGUST")
-    if message == "":
-        st.warning('Vui lòng nhập thông tin cần thiết !!!')
-    else:
-        buff, col, buff2 = st.columns([1,3,4])
-        a = col.text_input('Nhập key a:')
-        b = col.text_input('Nhập key b:') 
-        if a == "":
-            st.warning('Vui lòng nhập khóa a !!!')
-        elif b == "":
-            st.warning('Vui lòng nhập khóa b !!!')
-        else:
-            def mod_inverse(x,m):
-                for n in range(m):
-                    if (x * n) % m == 1:
-                        return n
-                        break
-                    elif n == m - 1:
-                        return "Null"
-                    else:
-                        continue
+            enc = cd.encryptChange(message, key)
+            dec = cd.decryptChange(enc, key)
+            st.success(f"**Ciphertext:** {enc}")
+            st.info(f"**Plaintext:** {dec}")
 
-            class Affine(object):
-                DIE = 26
-                KEY = (int(a), int(b), mod_inverse(int(a),26))
-                def __init__(self):
-                    pass
-                def encryptChar(self, char):
-                    K1, K2, kI = self.KEY
-                    return chr((K1 * (ord(char)-65) + K2) % self.DIE + 65)
-                
-                def encrypt(self, string):
-                    return "".join(map(self.encryptChar, string))
+def render_affine_cipher():
+    st.header("✖️ Affine Cipher")
+    with st.expander("Theory"):
+        st.write("Affine cipher combines multiplication and addition: E(x) = (ax + b) mod 26.")
+    
+    message = st.text_input("Message")
+    c1, c2 = st.columns(2)
+    a = c1.number_input("Key a (must be coprime to 26)", 1, 25, 5)
+    b = c2.number_input("Key b", 0, 25, 8)
+    
+    if st.button("Run Affine"):
+        if not message:
+            st.error("Input message required.")
+            return
+            
+        if mod_inverse_helper(a, 26) is None:
+            st.error(f"Error: 'a={a}' is not invertible modulo 26. Pick another 'a' (e.g. 1, 3, 5, 7, 9, 11...).")
+        else:
+            affine = AffineHelper(a, b)
+            enc = affine.encrypt(message)
+            dec = affine.decrypt(enc)
+            st.success(f"**Encrypted:** {enc}")
+            st.info(f"**Decrypted:** {dec}")
 
-                def decryptChar(self, char):
-                    K1, K2, KI = self.KEY
-                    return chr(KI * ((ord(char)-65) - K2) % self.DIE + 65)
+def render_vigenere_cipher():
+    st.header("📜 Vigenère Cipher")
+    st.caption("A polyalphabetic substitution using a keyword.")
+    
+    message = st.text_input("Message")
+    key = st.text_input("Keyword", "CIPHER")
+    
+    if st.button("Run Vigenère") and message and key:
+        enc = cd.encryptVigenere(message, key)
+        dec = cd.decryptVigenere(enc, key)
+        st.success(f"**Encrypted:** {enc}")
+        st.info(f"**Decrypted:** {dec}")
 
-                def decrypt(self, string):
-                    return "".join(map(self.decryptChar, string))
-                
-            affine = Affine()
-            # Mã hóa Affine
-            translated = affine.encrypt(message)
-            st.markdown('**Kết quả đã được encrypt:**')
-            st.text(translated)
-            # Giải mã Affine
-            decrypted = affine.decrypt(translated)
-            st.markdown('**Trả về kết quả decrypted:**')
-            st.text(decrypted)
-elif choice == "Mã Vigenere":
-    message = st.text_input("Nhập vào mã muốn được mã hóa:")
-    st.caption("VD: THISCRYPTOSYSTEMISNOTSECURE và key: CIPHER ")
-    if message == "":
-        st.warning('Vui lòng nhập thông tin cần thiết !!!')
-    else:
-        buff, col, buff2 = st.columns([1,3,4])
-        key = col.text_input('Nhập k:')
-        if key == "":
-            st.warning('Vui lòng nhập khóa !!!')
-        else:
-            # Mã hóa mã Vigenere
-            translated = cd.encryptVigenere(message, key)
-            st.markdown('**Kết quả đã được encrypt:**')
-            st.text(translated)    
-            # Giải mã mã Vigenere 
-            decrypted = cd.decryptVigenere(translated,key)
-            st.markdown('**Trả về kết quả decrypted:**')
-            st.text(decrypted)
-elif choice == "Mã Hill":
-    message = st.text_input("Nhập vào mã muốn được mã hóa:")
-    st.caption("VD: HELP và key: D C D F ")
-    if message == "":
-        st.warning('Vui lòng nhập thông tin cần thiết !!!')
-    else:
-        buff, col, buff2 = st.columns([1,3,4])
-        key = col.text_input('Nhập k:')
-        if key == "":
-            st.warning('Vui lòng nhập khóa !!!')
-        else:
-            k = cd.make_key(key)
-            # Mã hóa mã Hill
-            encrypted_msg = cd.encryptHill(message,k)
-            st.markdown('**Kết quả đã được encrypt:**')
-            st.text(encrypted_msg)  
-            # Giải mã mã Hill
-            decrypted_msg = cd.decryptHill(encrypted_msg,k)
-            st.markdown('**Trả về kết quả decrypted:**')
-            st.text(decrypted_msg)
-elif choice == "Base64":
-    message = st.text_input("Nhập vào mã muốn được mã hóa:")
-    st.caption("VD: rav ")
-    if message == "":
-        st.warning('Vui lòng nhập thông tin cần thiết !!!')
-    else:
-        encodedBytes = cd.base64.b64encode(message.encode("utf-8"))
-        encodedStr = str(encodedBytes, "utf-8")
-        decodedBytes = cd.base64.b64decode(encodedStr).decode("utf-8")
-        st.markdown('**Kết quả đã được encrypt:**')
-        st.text(encodedStr)
-        st.markdown('**Trả về kết quả decrypted:**')
-        st.text(decodedBytes)
-elif choice == 'Hệ mã XOR':
-    message = st.text_input("Nhập vào mã muốn được mã hóa: ")
-    st.caption("VD: GoodLife && key = cipher ")
-    if message == "":
-        st.warning('Vui lòng nhập thông tin cần thiết !!!')
-    else:
-        buff, col, buff2 = st.columns([1,3,4])
-        k = col.text_input('Nhập k:')
-        if k == "":
-            st.warning('Vui lòng nhập khóa !!!')
-        else:
-            c = cd.xor_encrypt_string(message, k)
-            st.markdown('**Kết quả đã được encrypt:**')
-            st.text(c)
-            st.markdown('**Trả về kết quả decrypted:**')
-            d = cd.xor_decrypt_string(c,k)
-            st.text(d)
-elif choice == "Mã nhân":
-    message = st.text_input("Nhập vào mã muốn được mã hóa: ")
-    st.caption("VD: ONAUGUST && key = 7 ")
-    if message == "":
-        st.warning('Vui lòng nhập thông tin cần thiết !!!')
-    else:
-        a = message.replace(" ","")
-        buff, col, buff2 = st.columns([1,3,4])
-        k = col.text_input('Nhập k:')
-        if k == "":
-            st.warning('Vui lòng nhập khóa !!!')
-        else:
-            e = cd.encryptNhan(a,k)
-            st.markdown('**Kết quả đã được encrypt:**')
-            st.text(e)
-            st.markdown('**Trả về kết quả decrypted:**')
-            d = cd.decryptNhan(e,k)
-            st.text(d)
-elif choice == "Fernet chuỗi ký tự":
-    message = st.text_input("Nhập vào mã muốn được mã hóa: ")
-    st.caption("VD: hello geeks ")
-    if message == "":
-        st.warning('Vui lòng nhập thông tin cần thiết !!!')
-    else:
+def render_hill_cipher():
+    st.header("⛰️ Hill Cipher")
+    st.caption("Polygraphic substitution cipher based on linear algebra.")
+    
+    message = st.text_input("Message")
+    key_str = st.text_input("Key String (e.g., 'DCDF' for 2x2 matrix)", "DCDF")
+    
+    if st.button("Run Hill") and message and key_str:
+        try:
+            k_matrix = cd.make_key(key_str)
+            enc = cd.encryptHill(message, k_matrix)
+            dec = cd.decryptHill(enc, k_matrix)
+            st.success(f"**Encrypted:** {enc}")
+            st.info(f"**Decrypted:** {dec}")
+        except Exception as e:
+            st.error(f"Error (Check key length vs message length/padding): {e}")
+
+def render_base64():
+    st.header("🧬 Base64 Encoding")
+    message = st.text_input("Text to Encode")
+    if  st.button("Encode/Decode") and message:
+        encoded_bytes = cd.base64.b64encode(message.encode("utf-8"))
+        encoded_str = str(encoded_bytes, "utf-8")
+        decoded_bytes = cd.base64.b64decode(encoded_str).decode("utf-8")
+        
+        st.code(encoded_str, language="text")
+        st.caption("Decoded back verify: " + decoded_bytes)
+
+def render_xor_cipher():
+    st.header("⊕ XOR Cipher")
+    st.info("Simple encryption using bitwise XOR.")
+    message = st.text_input("Message")
+    key = st.text_input("Key")
+    
+    if st.button("Run XOR") and message and key:
+        enc = cd.xor_encrypt_string(message, key)
+        dec = cd.xor_decrypt_string(enc, key)
+        st.success(f"**Encrypted (Hex):** {enc}")
+        st.info(f"**Decrypted:** {dec}")
+
+def render_multiplication_cipher(): # Mã nhân
+    st.header("✖ Multiplication Cipher (Mã Nhân)")
+    message = st.text_input("Message")
+    key = st.number_input("Key", 1, 100, 7)
+    
+    if st.button("Execute") and message:
+        # Note: encryptNhan expects string key in original, let's cast
+        enc = cd.encryptNhan(message.replace(" ",""), str(key))
+        dec = cd.decryptNhan(enc, str(key))
+        st.success(f"Encrypted: {enc}")
+        st.info(f"Decrypted: {dec}")
+
+def render_fernet():
+    st.header("🔑 Fernet (Symmetric Encryption)")
+    st.caption("Secure implementation using cryptography library.")
+    message = st.text_input("Message to encrypt")
+    if st.button("Generate Key & Encrypt") and message:
         key = Fernet.generate_key()
-        fernet = Fernet(key)
-        encMessage = fernet.encrypt(message.encode())
-        decMessage = fernet.decrypt(encMessage).decode()
-        st.markdown('**Chuỗi gốc:**')
-        st.text(message)
-        st.markdown('**Kết quả đã được encrypt:**')
-        st.text(encMessage)
-        st.markdown('**Trả về kết quả decrypted:**')
-        st.text(decMessage)
-elif choice == "Thám mã Ceasar":
-    message = st.text_input("Nhập vào mã muốn được mã hóa: ")
-    st.caption("VD: GIEWIVrGMTLIVrHIQS -- #encrypted message ")
-    if message == "":
-        st.warning('Vui lòng nhập thông tin cần thiết !!!')
-    else:
+        f = Fernet(key)
+        token = f.encrypt(message.encode())
+        d_msg = f.decrypt(token).decode()
+        
+        st.subheader("Key")
+        st.code(key.decode())
+        st.subheader("Token")
+        st.code(token.decode())
+        st.subheader("Decrypted Verification")
+        st.text(d_msg)
+
+def render_caesar_breaker():
+    st.header("🔓 Caesar Cipher Breaker (Brute Force)")
+    message = st.text_input("Encrypted Message")
+    if st.button("Hack It") and message:
         LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        st.write("Trying all 26 keys...")
         for key in range(len(LETTERS)):
             translated = ''
             for symbol in message:
-
-                if symbol in LETTERS:
-                    num = LETTERS.find(symbol)
+                if symbol.upper() in LETTERS:
+                    num = LETTERS.find(symbol.upper())
                     num = num - key
-                    if num < 0:
-                        num = num + len(LETTERS)
-                    translated = translated + LETTERS[num]
+                    if num < 0: num += len(LETTERS)
+                    translated += LETTERS[num]
                 else:
-                    translated = translated + symbol
-        st.text('Hacking key #%s: %s' % (key, translated))
-elif choice == "Mã DES":
-    message = st.text_input("Nhập vào mã muốn được mã hóa: ")
-    st.caption("VD: pt = '0123456789ABCDEF' && key = '133457799BBCDFF0'")
-    if message == "":
-        st.warning('Vui lòng nhập thông tin cần thiết !!!')
-    else:
-        buff, col, buff2 = st.columns([1,3,4])
-        key = col.text_input('Nhập key:')
-        if key == "":
-            st.warning('Vui lòng nhập khóa !!!')
-        elif len(key) < len(message):
-            st.warning('Vui lòng nhập lại khóa')
+                    translated += symbol
+            st.text(f"Key #{key}: {translated}")
+
+def render_des_cipher():
+    st.header("🛡️ DATA ENCRYPTION STANDARD (DES)")
+    st.warning("⚠️ For educational purpose. DES is no longer considered secure.")
+    
+    message = st.text_input("Hex Message (16 chars)", "0123456789ABCDEF")
+    key = st.text_input("Hex Key (16 chars)", "133457799BBCDFF0")
+    
+    if st.button("Run DES"):
+        if len(message) != 16 or len(key) != 16:
+            st.error("Message and Key must be exactly 16 Hex characters.")
         else:
-            pt = hex2bin(message)
-            pt = permute(pt, initial_perm, 64)
-            key = hex2bin(key)
-            key = permute(key, keyp, 56)
-            # Phân chia khóa thành nửa trái nửa phải
-            left = key[0:28] # rkb for RoundKeys in binary
-            right = key[28:56] # rk for RoundKeys in hexadecimal
-
-            rkb = []
-            rk = []
-
-            for i in range(0, 16):
-                # Dịch vòng trái theo số lượng bit của vòng
-                left = shift_left(left, shift_table[i])
-                right = shift_left(right, shift_table[i])
-
-                # Kết hợp nủa trái và phải
-                combine_str = left + right
-
-                # Qua PC2: Nén 56 bit thành 48 bit
-                round_key = permute(combine_str, key_comp, 48)
-                rkb.append(round_key)
-                rk.append(bin2hex(round_key))
-
-            st.subheader('Encryption')
-            st.write('**Sau khi hoán vị ban đầu:** ',bin2hex(pt))
-            
-            def encryptDES(pt, rkb, rk):
-                left = pt[0:32]
-                right = pt[32:64]
-                for i in range(0, 16):
-                    # Nửa phải qua hàm mở rộng (32 thành 48)
-                    right_expanded = permute(right, exp_d, 48)
-
-                    # XOR RoundKey[i] và right_expanded
-                    xor_x = xor(right_expanded, rkb[i])
-                    # Qua S-boxex
-                    sbox_str = ""
-                    for j in range(0, 8):
-                        row = bin2dec(int(xor_x[j * 6] + xor_x[j * 6 + 5]))
-                        col = bin2dec(int(xor_x[j * 6 + 1] + xor_x[j * 6 + 2] +
-                        xor_x[j * 6 + 3] + xor_x[j * 6 + 4]))
-                        val = sbox[int(j)][int(row)][int(col)]
-                        sbox_str = sbox_str + dec2bin(val)
-
-                    # Hoán vị P
-                    sbox_str = permute(sbox_str, per, 32)
-
-                    # XOR left và sbox_str
-                    result = xor(left, sbox_str)
-                    left = result
-
-                    # Đỗi chỗ (vòng lặp cuối)
-                    if(i != 15):
-                        left, right = right, left
-                        col1, col2, col3, col4 = st.columns(4)
-                        with col1:
-                            st.write("Round ", i+1)
-                        with col2:
-                            st.write(" ", bin2hex(left))
-                        with col3:
-                            st.write(" ", bin2hex(right))
-                        with col4:
-                            st.write(" ", rk[i])
-                # Kết hợp nửa trái và nửa phải lại
-                combine = left + right
-                # Hoán vị cuối FP
-                cipher_text = permute(combine, final_perm, 64)
-                return cipher_text
+            enc, rkb, rk = run_des_encryption(message, key)
+            if enc:
+                st.success(f"**Ciphertext (Hex):** {enc}")
+                with st.expander("View Round Keys"):
+                    st.write(rk)
                 
-            cipher_text = bin2hex(encryptDES(pt, rkb, rk))
-            st.write('**Cipher text:** ',cipher_text)
-            st.subheader('Decryption')
-            rkb_rev = rkb[::-1]
-            rk_rev = rk[::-1]
-            pt1 = hex2bin(cipher_text)
-            pt1 = permute(pt1, initial_perm, 64)
-            st.write('**Sau khi hoán vị ban đầu:** ',bin2hex(pt1))
-            text = bin2hex(encryptDES(pt1, rkb_rev, rk_rev))
-            st.write('**Plain Text :** ',text)
-elif choice == "Mã RSA":
-    keyPair = RSA.generate(2048)
-    pubKey = keyPair.publickey()
-    # st.text(f"Public key:(n={hex(pubKey.n)}, e={hex(pubKey.e)})")
-    pubKeyPEM = pubKey.exportKey()
-    # st.text(pubKeyPEM.decode('ascii'))
-    # st.text(f"Private key: (n={hex(pubKey.n)}, d={hex(keyPair.d)})")
-    privKeyPEM = keyPair.exportKey()
-    # st.text(privKeyPEM.decode('ascii'))
+                dec = run_des_decryption(enc, rkb, rk)
+                st.info(f"**Decrypted (Hex):** {dec}")
+            else:
+                st.error("Encryption failed. Check hex input.")
 
-    msg = bytes(str(st.text_input("Nhập plain text: ")), 'utf-8')
-    if msg == "":
-        st.warning("Vui lòng nhập message")
+def render_rsa_cipher():
+    st.header("🔐 RSA (Rivest–Shamir–Adleman)")
+    
+    mode = st.radio("Mode", ["Simple String", "Custom Key Demo"])
+    
+    if mode == "Simple String":
+        msg = st.text_input("Message")
+        if st.button("Encrypt/Decrypt"):
+            keyPair = RSA.generate(2048)
+            pubKey = keyPair.publickey()
+            
+            encryptor = PKCS1_OAEP.new(pubKey)
+            encrypted = encryptor.encrypt(msg.encode())
+            
+            decryptor = PKCS1_OAEP.new(keyPair)
+            decrypted = decryptor.decrypt(encrypted)
+            
+            st.write("Encrypted (Hex):", binascii.hexlify(encrypted))
+            st.write("Decrypted:", decrypted.decode('utf-8'))
+            
     else:
-        encryptor = PKCS1_OAEP.new(pubKey)
-        encrypted = encryptor.encrypt(msg)
-        st.write("Encrypted:", binascii.hexlify(encrypted))
-        decryptor = PKCS1_OAEP.new(keyPair)
-        decrypted = decryptor.decrypt(encrypted)
-        st.write('Decrypted:', decrypted.decode('utf-8'))
+        # Custom small key demo
+        msg = st.text_input("Message for Custom Key")
+        if st.button("Run Custom RSA logic"):
+            key = RSA.generate(1024)
+            binPrivKey = key.exportKey('PEM')
+            binPubKey = key.publickey().exportKey('PEM')
+            
+            privKeyObj = RSA.importKey(binPrivKey)
+            pubKeyObj = RSA.importKey(binPubKey)
+            
+            cipher = PKCS1_OAEP.new(pubKeyObj)
+            ciphertext = cipher.encrypt(msg.encode())
+            
+            st.subheader("Ciphertext (Base64)")
+            st.write(b64encode(ciphertext).decode())
+            
+            cipher_dec = PKCS1_OAEP.new(privKeyObj)
+            text = cipher_dec.decrypt(ciphertext)
+            st.subheader("Decrypted")
+            st.write(text.decode())
 
-        msg = st.text_input("Message:")
-        if (len(sys.argv)>1):
-            msg=str(sys.argv[1])
+def render_elgamal_cipher():
+    st.header("🔑 Elgamal Encryption")
+    message = st.text_input("Message")
+    
+    if st.button("Run Elgamal") and message:
+        # Using functions from code.py (cd)
+        # Assuming cd has: gen_key(q), power(a,b,c), encryption(msg,q,h,g), decryption(ct,p,key,q)
+        try:
+            q = cd.random.randint(pow(10,20), pow(10,50)) # Large prime approximation
+            g = cd.random.randint(2, q)
+            key = cd.gen_key(q)
+            h = cd.power(g, key, q)
+            
+            st.write(f"**Public Key elements:** q={q}, g={g}, h={h}")
+            
+            ct, p = cd.encryption(message, q, h, g)
+            st.success(f"**Encrypted:** {ct}")
+            
+            pt = cd.decryption(ct, p, key, q)
+            d_msg = ''.join(pt)
+            st.info(f"**Decrypted:** {d_msg}")
+        except Exception as e:
+            st.error(f"Elgamal Error: {e}")
 
-        key = RSA.generate(1024)
+# ==============================================================================
+# MAIN APP LOGIC
+# ==============================================================================
 
-        binPrivKey = key.exportKey('PEM')
-        binPubKey = key.publickey().exportKey('PEM') 
-        # st.subheader ("====================Private key====================")
+def main():
+    inject_custom_css()
+    
+    st.sidebar.title("MENU")
+    
+    # Mapping friendly names to functions
+    PAGES = {
+        "Home / Intro": render_home,
+        "Mã Đảo Ngược (Reverse)": render_reverse_cipher,
+        "Mã Caesar": render_caesar_cipher,
+        "Mã Đổi Chỗ (Transposition)": render_transposition_cipher,
+        "Mã Thay Thế Đơn (Substitution)": render_substitution_cipher,
+        "Mã Affine": render_affine_cipher,
+        "Mã Vigenere": render_vigenere_cipher,
+        "Mã Hill": render_hill_cipher,
+        "Base64 Encoding": render_base64,
+        "Hệ mã XOR": render_xor_cipher,
+        "Mã Nhân (Multiplication)": render_multiplication_cipher,
+        "Fernet (Symmetric)": render_fernet,
+        "Thám Mã Caesar (Brute Force)": render_caesar_breaker,
+        "Mã DES": render_des_cipher,
+        "Mã RSA": render_rsa_cipher,
+        "Mã Elgamal": render_elgamal_cipher
+    }
+    
+    selection = st.sidebar.radio("Choose Algorithm:", list(PAGES.keys()))
+    
+    st.sidebar.markdown("---")
+    st.sidebar.info("Designed for Information Security Course.")
+    
+    # Execute the selected page function
+    page_func = PAGES[selection]
+    page_func()
 
-        # st.text (binPrivKey)
-        # st.subheader ("====================Public key=====================")
-        # st.text (binPubKey)
-        privKeyObj = RSA.importKey(binPrivKey)
-        pubKeyObj = RSA.importKey(binPubKey)
-        cipher = PKCS1_OAEP.new(pubKeyObj)
-        ciphertext = cipher.encrypt(msg.encode())
-        st.subheader ("====================Ciphertext=====================")
-        st.write (b64encode(ciphertext))
-        cipher = PKCS1_OAEP.new(privKeyObj)
-        message = cipher.decrypt(ciphertext)
-        st.subheader ("====================Decrypted======================")
-        st.write ("Message:",message)
-elif choice == "Mã Elgamal":
-    msg=st.text_input("Nhập message: ")
-    if msg == "":
-        st.warning('Vui lòng nhập thông tin cần thiết !!!')
-    else:
-        q=cd.random.randint(pow(10,20),pow(10,50))
-        g=cd.random.randint(2,q)
-        key=cd.gen_key(q)
-        h=cd.power(g,key,q)
-        st.write("g used=",g)
-        st.write("g^a used=",h)
-        ct,p=cd.encryption(msg,q,h,g)
-        st.write("Original Message =",msg)
-        st.write("Encrypted Maessage =",ct)
-        pt=cd.decryption(ct,p,key,q)
-        d_msg=''.join(pt)
-        st.write("Decryted Message=",d_msg)
+if __name__ == "__main__":
+    main()
